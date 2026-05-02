@@ -136,3 +136,8 @@ public class EightPuzzleDLS {
         }
     }
 }
+
+//Row 1: 1 2 3
+//Row 2: 4 5 6
+//Row 3: 0 7 8
+//Enter depth limit: 10
