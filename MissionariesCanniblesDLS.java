@@ -13,6 +13,11 @@ public class MissionariesCanniblesDLS {
             boat = b;
         }
 
+        // String key for visited
+        String getKey() {
+            return mLeft + "," + cLeft + "," + boat;
+        }
+
         boolean isValid() {
             int mRight = 3 - mLeft;
             int cRight = 3 - cLeft;
@@ -26,34 +31,24 @@ public class MissionariesCanniblesDLS {
 
             return true;
         }
-
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof State)) return false;
-            State s = (State) o;
-            return mLeft == s.mLeft && cLeft == s.cLeft && boat == s.boat;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(mLeft, cLeft, boat);
-        }
     }
 
     static boolean dls(State current, int depth,
-                       List<State> path, Set<State> visited) {
+                       List<State> path, Set<String> visited) {
 
         path.add(current);
 
+        // Goal check
         if (current.mLeft == 0 && current.cLeft == 0 && current.boat == 1)
             return true;
 
+        // Depth limit check
         if (depth == LIMIT) {
             path.remove(path.size() - 1);
             return false;
         }
 
-        visited.add(current);
+        visited.add(current.getKey());
 
         int[][] moves = {
             {1, 0}, {0, 1}, {2, 0}, {0, 2}, {1, 1}
@@ -77,17 +72,20 @@ public class MissionariesCanniblesDLS {
                 );
             }
 
-            if (next.isValid() && !visited.contains(next)) {
+            // Use string instead of object comparison
+            if (next.isValid() && !visited.contains(next.getKey())) {
                 if (dls(next, depth + 1, path, visited))
                     return true;
             }
         }
 
+        // Backtrack
         path.remove(path.size() - 1);
         return false;
     }
 
     public static void main(String[] args) {
+
         Scanner sc = new Scanner(System.in);
 
         System.out.print("Enter depth limit: ");
@@ -96,11 +94,13 @@ public class MissionariesCanniblesDLS {
         sc.close();
 
         State start = new State(3, 3, 0);
+
         List<State> path = new ArrayList<>();
-        Set<State> visited = new HashSet<>();
+        Set<String> visited = new HashSet<>();
 
         if (dls(start, 0, path, visited)) {
             System.out.println("Solution found within depth " + LIMIT + ":\n");
+
             for (State s : path) {
                 System.out.println(
                     "M_left=" + s.mLeft +
