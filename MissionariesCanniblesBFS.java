@@ -12,16 +12,20 @@ class State {
         this.parent = parent;
     }
 
+    // Convert state to string key
+    public String getKey() {
+        return mLeft + "," + cLeft + "," + boatLeft;
+    }
+
     // Check if state is valid
     public boolean isValid() {
         int mRight = 3 - mLeft;
         int cRight = 3 - cLeft;
 
-        // Missionaries should not be outnumbered
-        if ((mLeft > 0 && mLeft < cLeft) || (mRight > 0 && mRight < cRight))
+        if ((mLeft > 0 && mLeft < cLeft) ||
+            (mRight > 0 && mRight < cRight))
             return false;
 
-        // Bounds
         if (mLeft < 0 || cLeft < 0 || mLeft > 3 || cLeft > 3)
             return false;
 
@@ -32,18 +36,6 @@ class State {
     public boolean isGoal() {
         return mLeft == 0 && cLeft == 0 && !boatLeft;
     }
-
-    // For HashSet
-    @Override
-    public boolean equals(Object o) {
-        State s = (State) o;
-        return mLeft == s.mLeft && cLeft == s.cLeft && boatLeft == s.boatLeft;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(mLeft, cLeft, boatLeft);
-    }
 }
 
 public class MissionariesCannibalsBFS {
@@ -52,9 +44,9 @@ public class MissionariesCannibalsBFS {
         List<State> next = new ArrayList<>();
 
         int[][] moves = {
-            {1, 0}, {2, 0},   // missionaries
-            {0, 1}, {0, 2},   // cannibals
-            {1, 1}            // both
+            {1, 0}, {2, 0},
+            {0, 1}, {0, 2},
+            {1, 1}
         };
 
         for (int[] move : moves) {
@@ -79,6 +71,7 @@ public class MissionariesCannibalsBFS {
 
     static void printSolution(State goal) {
         List<State> path = new ArrayList<>();
+
         while (goal != null) {
             path.add(goal);
             goal = goal.parent;
@@ -87,22 +80,26 @@ public class MissionariesCannibalsBFS {
         Collections.reverse(path);
 
         for (State s : path) {
-            System.out.println("Left: M=" + s.mLeft + " C=" + s.cLeft +
-                    " | Right: M=" + (3 - s.mLeft) + " C=" + (3 - s.cLeft) +
-                    " | Boat: " + (s.boatLeft ? "Left" : "Right"));
+            System.out.println(
+                "Left: M=" + s.mLeft + " C=" + s.cLeft +
+                " | Right: M=" + (3 - s.mLeft) + " C=" + (3 - s.cLeft) +
+                " | Boat: " + (s.boatLeft ? "Left" : "Right")
+            );
         }
     }
 
     public static void bfs() {
+
         State start = new State(3, 3, true, null);
 
         Queue<State> queue = new LinkedList<>();
-        Set<State> visited = new HashSet<>();
+        Set<String> visited = new HashSet<>();
 
         queue.add(start);
-        visited.add(start);
+        visited.add(start.getKey());
 
         while (!queue.isEmpty()) {
+
             State current = queue.poll();
 
             if (current.isGoal()) {
@@ -111,9 +108,10 @@ public class MissionariesCannibalsBFS {
             }
 
             for (State next : getNextStates(current)) {
-                if (!visited.contains(next)) {
+
+                if (!visited.contains(next.getKey())) {
                     queue.add(next);
-                    visited.add(next);
+                    visited.add(next.getKey());
                 }
             }
         }
