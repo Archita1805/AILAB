@@ -25,6 +25,15 @@ public class EightPuzzleBestFirst {
             h = calculateHeuristic();
         }
 
+        // String key
+        String getKey() {
+            StringBuilder sb = new StringBuilder();
+            for (int[] row : board)
+                for (int val : row)
+                    sb.append(val).append(",");
+            return sb.toString();
+        }
+
         int calculateHeuristic() {
             int[][] goal = {
                 {1,2,3},
@@ -40,17 +49,6 @@ public class EightPuzzleBestFirst {
 
             return count;
         }
-
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof State)) return false;
-            return Arrays.deepEquals(board, ((State)o).board);
-        }
-
-        @Override
-        public int hashCode() {
-            return Arrays.deepHashCode(board);
-        }
     }
 
     static List<State> getNextStates(State s) {
@@ -64,11 +62,11 @@ public class EightPuzzleBestFirst {
             int ny = s.y + dy[k];
 
             if (nx >= 0 && nx < N && ny >= 0 && ny < N) {
+
                 int[][] newBoard = new int[N][N];
                 for (int i = 0; i < N; i++)
                     newBoard[i] = s.board[i].clone();
 
-                // swap blank
                 newBoard[s.x][s.y] = newBoard[nx][ny];
                 newBoard[nx][ny] = 0;
 
@@ -81,16 +79,25 @@ public class EightPuzzleBestFirst {
 
     static void bestFirstSearch(int[][] start) {
 
-        PriorityQueue<State> pq = new PriorityQueue<>(Comparator.comparingInt(s -> s.h));
-        Set<State> visited = new HashSet<>();
+        PriorityQueue<State> pq =
+                new PriorityQueue<>(Comparator.comparingInt(s -> s.h));
+
+        Set<String> visited = new HashSet<>();
 
         State initial = new State(start);
         pq.add(initial);
 
         while (!pq.isEmpty()) {
+
             State current = pq.poll();
 
-            // print state
+            // Skip if already visited
+            if (visited.contains(current.getKey()))
+                continue;
+
+            visited.add(current.getKey());
+
+            // Print state
             for (int[] row : current.board) {
                 for (int val : row)
                     System.out.print(val + " ");
@@ -98,16 +105,14 @@ public class EightPuzzleBestFirst {
             }
             System.out.println("h = " + current.h + "\n");
 
-            // goal check
+            // Goal check
             if (current.h == 0) {
                 System.out.println("Goal reached!");
                 return;
             }
 
-            visited.add(current);
-
             for (State next : getNextStates(current)) {
-                if (!visited.contains(next)) {
+                if (!visited.contains(next.getKey())) {
                     pq.add(next);
                 }
             }
