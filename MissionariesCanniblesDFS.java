@@ -11,37 +11,28 @@ public class MissionariesCannibalsDFS {
             boat = b;
         }
 
+        // Convert state to string key
+        String getKey() {
+            return mLeft + "," + cLeft + "," + boat;
+        }
+
         // Check if state is valid
         boolean isValid() {
             int mRight = 3 - mLeft;
             int cRight = 3 - cLeft;
 
-            // No negative or overflow
             if (mLeft < 0 || cLeft < 0 || mLeft > 3 || cLeft > 3)
                 return false;
 
-            // Missionaries eaten condition
             if ((mLeft > 0 && cLeft > mLeft) ||
                 (mRight > 0 && cRight > mRight))
                 return false;
 
             return true;
         }
-
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof State)) return false;
-            State s = (State) o;
-            return mLeft == s.mLeft && cLeft == s.cLeft && boat == s.boat;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(mLeft, cLeft, boat);
-        }
     }
 
-    static Set<State> visited = new HashSet<>();
+    static Set<String> visited = new HashSet<>();
 
     static boolean dfs(State current, List<State> path) {
 
@@ -51,7 +42,7 @@ public class MissionariesCannibalsDFS {
         if (current.mLeft == 0 && current.cLeft == 0 && current.boat == 1)
             return true;
 
-        visited.add(current);
+        visited.add(current.getKey());
 
         // All possible moves
         int[][] moves = {
@@ -61,13 +52,13 @@ public class MissionariesCannibalsDFS {
         for (int[] move : moves) {
             State next;
 
-            if (current.boat == 0) { // boat on left → move to right
+            if (current.boat == 0) { // left → right
                 next = new State(
                     current.mLeft - move[0],
                     current.cLeft - move[1],
                     1
                 );
-            } else { // boat on right → move to left
+            } else { // right → left
                 next = new State(
                     current.mLeft + move[0],
                     current.cLeft + move[1],
@@ -75,7 +66,7 @@ public class MissionariesCannibalsDFS {
                 );
             }
 
-            if (next.isValid() && !visited.contains(next)) {
+            if (next.isValid() && !visited.contains(next.getKey())) {
                 if (dfs(next, path))
                     return true;
             }
