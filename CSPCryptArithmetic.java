@@ -2,14 +2,11 @@ import java.util.*;
 
 public class CSPCryptArithmetic {
 
-    static String s1 = "SEND";
-    static String s2 = "MORE";
-    static String s3 = "MONEY";
+    static String s1, s2, s3;
 
     static HashMap<Character, Integer> map = new HashMap<>();
     static boolean[] used = new boolean[10];
 
-    // Convert string to number using assigned digits
     static int getNumber(String s) {
         int num = 0;
         for (int i = 0; i < s.length(); i++) {
@@ -18,12 +15,10 @@ public class CSPCryptArithmetic {
         return num;
     }
 
-    // Solve using backtracking
     static boolean solve(List<Character> uniqueChars, int index) {
 
         if (index == uniqueChars.size()) {
 
-            // Leading zero check
             if (map.get(s1.charAt(0)) == 0 || map.get(s2.charAt(0)) == 0 || map.get(s3.charAt(0)) == 0)
                 return false;
 
@@ -53,7 +48,6 @@ public class CSPCryptArithmetic {
                 if (solve(uniqueChars, index + 1))
                     return true;
 
-                // Backtrack
                 map.remove(ch);
                 used[digit] = false;
             }
@@ -63,7 +57,19 @@ public class CSPCryptArithmetic {
 
     public static void main(String[] args) {
 
-        // Get unique characters
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter first word: ");
+        s1 = scanner.next().toUpperCase();
+
+        System.out.print("Enter second word: ");
+        s2 = scanner.next().toUpperCase();
+
+        System.out.print("Enter result word: ");
+        s3 = scanner.next().toUpperCase();
+
+        scanner.close();
+
         Set<Character> set = new HashSet<>();
 
         for (char c : s1.toCharArray()) set.add(c);
