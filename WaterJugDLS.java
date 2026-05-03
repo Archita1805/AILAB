@@ -10,60 +10,66 @@ public class WaterJugDLS {
             this.y = y;
         }
 
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof State)) return false;
-            State s = (State) o;
-            return x == s.x && y == s.y;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(x, y);
+        // Convert state to string
+        String getKey() {
+            return x + "," + y;
         }
     }
 
     static int jug1Cap, jug2Cap, target, LIMIT;
 
-    static boolean dls(State current, int depth, List<State> path, Set<State> visited) {
+    static boolean dls(State current, int depth, List<State> path, Set<String> visited) {
 
         path.add(current);
 
+        // Goal check
         if (current.x == target || current.y == target)
             return true;
 
+        // Depth limit reached
         if (depth == LIMIT) {
             path.remove(path.size() - 1);
             return false;
         }
 
-        visited.add(current);
+        visited.add(current.getKey());
 
         List<State> nextStates = new ArrayList<>();
 
+        // Fill Jug1
         nextStates.add(new State(jug1Cap, current.y));
+
+        // Fill Jug2
         nextStates.add(new State(current.x, jug2Cap));
+
+        // Empty Jug1
         nextStates.add(new State(0, current.y));
+
+        // Empty Jug2
         nextStates.add(new State(current.x, 0));
 
+        // Pour Jug1 → Jug2
         int pourToJug2 = Math.min(current.x, jug2Cap - current.y);
         nextStates.add(new State(current.x - pourToJug2, current.y + pourToJug2));
 
+        // Pour Jug2 → Jug1
         int pourToJug1 = Math.min(current.y, jug1Cap - current.x);
         nextStates.add(new State(current.x + pourToJug1, current.y - pourToJug1));
 
         for (State next : nextStates) {
-            if (!visited.contains(next)) {
+            if (!visited.contains(next.getKey())) {
                 if (dls(next, depth + 1, path, visited))
                     return true;
             }
         }
 
+        // Backtrack
         path.remove(path.size() - 1);
         return false;
     }
 
     public static void main(String[] args) {
+
         Scanner sc = new Scanner(System.in);
 
         System.out.print("Enter capacity of Jug 1: ");
@@ -86,7 +92,7 @@ public class WaterJugDLS {
         }
 
         List<State> path = new ArrayList<>();
-        Set<State> visited = new HashSet<>();
+        Set<String> visited = new HashSet<>();
 
         if (dls(new State(0, 0), 0, path, visited)) {
             System.out.println("Solution within depth limit:");
@@ -98,4 +104,3 @@ public class WaterJugDLS {
         }
     }
 }
-//4 3 2 10
