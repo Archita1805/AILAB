@@ -2,135 +2,170 @@ import java.util.*;
 
 public class EightPuzzleDFS {
 
-    static final int N = 3;
+    static final int N = 9;
+    static final int MAX_STATES = 100000;
 
+    // State class
     static class State {
-        int[][] board;
-        int x, y;
-        State parent;
+        int[] puzzle = new int[N];
+        int parent;
 
-        State(int[][] b, State parent) {
-            board = new int[N][N];
-            for (int i = 0; i < N; i++)
-                board[i] = b[i].clone();
+        State(int[] puzzle, int parent) {
+            this.puzzle = puzzle.clone();
             this.parent = parent;
-
-            for (int i = 0; i < N; i++)
-                for (int j = 0; j < N; j++)
-                    if (board[i][j] == 0) {
-                        x = i;
-                        y = j;
-                    }
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof State)) return false;
-            return Arrays.deepEquals(board, ((State) o).board);
-        }
-
-        @Override
-        public int hashCode() {
-            return Arrays.deepHashCode(board);
         }
     }
 
-    static int[][] goal = {
-        {1, 2, 3},
-        {4, 5, 6},
-        {7, 8, 0}
-    };
+    static State[] states = new State[MAX_STATES];
+    static int stateCount = 0;
+    static int goalIndex = -1;
 
-    static boolean isGoal(State s) {
-        return Arrays.deepEquals(s.board, goal);
-    }
-
-    static List<State> getNextStates(State s) {
-        List<State> next = new ArrayList<>();
-        int[] dx = {-1, 1, 0, 0};
-        int[] dy = {0, 0, -1, 1};
-
-        for (int k = 0; k < 4; k++) {
-            int nx = s.x + dx[k];
-            int ny = s.y + dy[k];
-
-            if (nx >= 0 && nx < N && ny >= 0 && ny < N) {
-                int[][] newBoard = new int[N][N];
-                for (int i = 0; i < N; i++)
-                    newBoard[i] = s.board[i].clone();
-
-                newBoard[s.x][s.y] = newBoard[nx][ny];
-                newBoard[nx][ny] = 0;
-
-                next.add(new State(newBoard, s));
-            }
-        }
-        return next;
-    }
-
-    // ✅ DFS with a hard depth limit — no stack overflow
-    static State depthLimitedDFS(State current, int depth, Set<State> visited) {
-        if (isGoal(current)) return current;
-        if (depth == 0) return null; // ✅ Stop going deeper
-
-        visited.add(current);
-
-        for (State next : getNextStates(current)) {
-            if (!visited.contains(next)) {
-                State result = depthLimitedDFS(next, depth - 1, visited);
-                if (result != null) return result;
-            }
-        }
-
-        visited.remove(current); // backtrack
-        return null;
-    }
-
-    // ✅ IDDFS — try depth 1, 2, 3... until solution found
-    static List<State> iddfs(State initial) {
-        for (int depth = 0; depth <= 50; depth++) {
-            System.out.println("Trying depth limit: " + depth);
-
-            Set<State> visited = new HashSet<>();
-            State result = depthLimitedDFS(initial, depth, visited);
-
-            if (result != null) {
-                // Reconstruct path via parent pointers
-                List<State> path = new ArrayList<>();
-                for (State s = result; s != null; s = s.parent)
-                    path.add(s);
-                Collections.reverse(path);
-                return path;
-            }
-        }
-        return null; // no solution within max depth
-    }
-
-    public static void printBoard(int[][] board) {
-        for (int[] row : board) {
-            for (int val : row)
-                System.out.print(val + " ");
-            System.out.println();
+    // Print state
+    static void printState(State s) {
+        for (int i = 0; i < N; i++) {
+            if (i % 3 == 0) System.out.println();
+            if (s.puzzle[i] == 0)
+                System.out.print("  _ ");
+            else
+                System.out.print("  " + s.puzzle[i] + " ");
         }
         System.out.println();
     }
 
+    // Compare states
+    static boolean isSame(State s1, State s2) {
+        return Arrays.equals(s1.puzzle, s2.puzzle);
+    }
+
+    // Check visited
+    static boolean isVisited(State s) {
+        for (int i = 0; i < stateCount; i++) {
+            if (isSame(states[i], s)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Goal check
+    static boolean isGoal(State s) {
+        int[] goal = {1, 2, 3, 4, 5, 6, 7, 8, 0};
+        return Arrays.equals(s.puzzle, goal);
+    }
+
+    // DFS
+    static boolean dfs(State current, int parentIndex) {
+
+        if (stateCount >= MAX_STATES) return false;
+
+        if (isVisited(current)) return false;
+
+        int currentIndex = stateCount;
+        states[currentIndex] = new State(current.puzzle, parentIndex);
+        stateCount++;
+
+        if (isGoal(states[currentIndex])) {
+            goalIndex = currentIndex;
+            return true;
+        }
+
+        // Find blank
+        int zeroPos = -1;
+        for (int i = 0; i < N; i++) {
+            if (current.puzzle[i] == 0) {
+                zeroPos = i;
+                break;
+            }
+        }
+
+        int row = zeroPos / 3;
+        int col = zeroPos % 3;
+
+        // UP
+        if (row > 0) {
+            State next = new State(current.puzzle, -1);
+            int newPos = (row - 1) * 3 + col;
+            swap(next.puzzle, zeroPos, newPos);
+            if (dfs(next, currentIndex)) return true;
+        }
+
+        // DOWN
+        if (row < 2) {
+            State next = new State(current.puzzle, -1);
+            int newPos = (row + 1) * 3 + col;
+            swap(next.puzzle, zeroPos, newPos);
+            if (dfs(next, currentIndex)) return true;
+        }
+
+        // LEFT
+        if (col > 0) {
+            State next = new State(current.puzzle, -1);
+            int newPos = row * 3 + (col - 1);
+            swap(next.puzzle, zeroPos, newPos);
+            if (dfs(next, currentIndex)) return true;
+        }
+
+        // RIGHT
+        if (col < 2) {
+            State next = new State(current.puzzle, -1);
+            int newPos = row * 3 + (col + 1);
+            swap(next.puzzle, zeroPos, newPos);
+            if (dfs(next, currentIndex)) return true;
+        }
+
+        return false;
+    }
+
+    // Swap helper
+    static void swap(int[] arr, int i, int j) {
+        int temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+
+    // Print solution path
+    static void printPath(int goalIndex) {
+        int[] path = new int[MAX_STATES];
+        int length = 0;
+
+        int current = goalIndex;
+        while (current != -1) {
+            path[length++] = current;
+            current = states[current].parent;
+        }
+
+        System.out.println("\nSolution path (start → goal):");
+        for (int i = length - 1; i >= 0; i--) {
+            System.out.println("\nStep " + (length - 1 - i) + ":");
+            printState(states[path[i]]);
+        }
+    }
+
     public static void main(String[] args) {
-        int[][] start = {
-            {1, 2, 3},
-            {4, 0, 5},
-            {6, 7, 8}
+
+        System.out.println("=== DFS: 8-PUZZLE PROBLEM ===");
+
+        int[] startPuzzle = {
+                1, 2, 3,
+                4, 0, 6,
+                7, 5, 8
         };
 
-        State initial = new State(start, null);
-        List<State> path = iddfs(initial);
+        State start = new State(startPuzzle, -1);
 
-        if (path != null) {
-            System.out.println("Solution found in " + (path.size() - 1) + " moves:\n");
-            for (State s : path)
-                printBoard(s.board);
+        System.out.println("\nStart state:");
+        printState(start);
+
+        stateCount = 0;
+        goalIndex = -1;
+
+        boolean found = dfs(start, -1);
+
+        if (found && goalIndex != -1) {
+            System.out.println("\nGoal state reached!");
+            printPath(goalIndex);
         } else {
-            System.out.println("No solution found.");
+            System.out.println("\nGoal state NOT reached.");
         }
     }
 }
